@@ -8,6 +8,7 @@ dist
 /classes/
 node_modules/
 .idea/
+.vs/
 .vscode/
 wiki
 felix
