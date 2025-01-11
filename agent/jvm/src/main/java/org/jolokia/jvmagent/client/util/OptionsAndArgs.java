@@ -227,13 +227,14 @@ public final class OptionsAndArgs {
             try {
                 timeout = Long.parseLong(timeoutOption);
                 if (timeout < 0) {
-                    throw new NumberFormatException("Invalid start timeout: " + timeoutOption);
+                    throw new NumberFormatException();
                 }
             } catch (NumberFormatException exp) {
                 throw new IllegalArgumentException("Invalid start timeout: " + timeoutOption);
             }
         }
 
+        return timeout;
     }
 
      /**
