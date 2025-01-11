@@ -42,7 +42,7 @@ public final class OptionsAndArgs {
             "host", "port", "agentContext", "user", "password",
             "quiet!", "verbose!", "version!", "executor", "threadNamePrefix", "threadNr",
             "backlog", "hide!", "protocol", "authMode", "authClass",
-            "authUrl", "authPrincipalSpec", "authIgnoreCerts!",
+            "authUrl", "authPrincipalSpec", "authIgnoreCerts!", "startTimeout",
             //https options:
             "keystore", "keystorePassword", "useSslClientAuthentication!",
             "secureSocketProtocol", "keyStoreType", "keyManagerAlgorithm", "trustManagerAlgorithm",
@@ -215,6 +215,28 @@ public final class OptionsAndArgs {
     }
 
     /**
+     * Get the configured start timeout
+     */
+    public long getStartTimeout() {
+        String timeoutOption = options.get("startTimeout");
+        long timeout;
+
+        if (timeoutOption == null) {
+            timeout = 1000; //default
+        } else {
+            try {
+                timeout = Long.parseLong(timeoutOption);
+                if (timeout < 0) {
+                    throw new NumberFormatException("Invalid start timeout: " + timeoutOption);
+                }
+            } catch (NumberFormatException exp) {
+                throw new IllegalArgumentException("Invalid start timeout: " + timeoutOption);
+            }
+        }
+
+    }
+
+     /**
      * Verbose output if this is true
      *
      * @return true if verbose output is requested

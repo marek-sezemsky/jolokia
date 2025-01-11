@@ -39,33 +39,48 @@ public class StartCommand extends AbstractBaseCommand {
     @SuppressWarnings("PMD.SystemPrintln")
     int execute(OptionsAndArgs pOpts, Object pVm, VirtualMachineHandlerOperations pHandler) {
         String agentUrl;
-        agentUrl = checkAgentUrl(pVm, pHandler);
         boolean quiet = pOpts.isQuiet();
-        if (agentUrl == null) {
-            loadAgent(pVm, pHandler, pOpts);
-            agentUrl = checkAgentUrl(pVm, pHandler);
-            if (agentUrl == null) {
-                // Wait a bit and try again
-                agentUrl = checkAgentUrl(pVm, pHandler, 500);
-                if (agentUrl == null) {
-                    System.err.println("Couldn't start agent for " + getProcessDescription(pHandler, pOpts));
-                    System.err.println("Possible reason could be that port '" + pOpts.getPort() + "' is already occupied.");
-                    System.err.println("Please check the standard output of the target process for a detailed error message.");
-                    return 1;
-                }
-            }
-            if (!quiet) {
-                System.out.println("Started Jolokia for " + getProcessDescription(pHandler, pOpts));
-                System.out.println(agentUrl);
-            }
-            return 0;
-        } else {
+
+        agentUrl = checkAgentUrl(pVm, pHandler);
+        if (agentUrl != null) {
             if (!quiet) {
                 System.out.println("Jolokia is already attached to " + getProcessDescription(pHandler, pOpts));
                 System.out.println(agentUrl);
             }
             return 1;
         }
+
+        loadAgent(pVm, pHandler, pOpts);
+
+        long startTimeout = pOpts.getStartTimeout();
+        long pollSleep = 200;
+        if (startTimeout < pollSleep) {
+            pollSleep = startTimeout;
+        }
+        do {
+            agentUrl = checkAgentUrl(pVm, pHandler);
+            if (agentUrl != null) {
+                if (!quiet) {
+                    System.out.println("Started Jolokia for " + getProcessDescription(pHandler, pOpts));
+                    System.out.println(agentUrl);
+                }
+                return 0;
+            }
+            if (startTimeout < 0) {
+                if (!quiet) {
+                    System.err.println("Couldn't start agent for " + getProcessDescription(pHandler, pOpts));
+                    System.err.println("Possible reason could be that port '" + pOpts.getPort() + "' is already occupied.");
+                    System.err.println("Please check the standard output of the target process for a detailed error message.");
+                }
+                return 1;
+            }
+            try {
+                Thread.sleep(pollSleep);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted while waiting for agent to start");
+            }
+            startTimeout -= pollSleep;
+        } while (true);
     }
 
 }
